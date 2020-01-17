@@ -19,6 +19,10 @@ func main() {
 	//使用gonum库的方法计算最佳值
 	theta0, theta1 := stat.LinearRegression(x, y, nil, false)
 	fmt.Printf("theta_0=%.2f, theta_1=%.2f, cost=%.2f\n", theta0, theta1, cost(x, y, theta0, theta1))
+
+	//使用最低消耗的参数来估算价格
+	res := h(3000, theta0, theta1)
+	fmt.Printf("beat price for %df = %.2f\n", 3000, res)
 }
 
 /**
@@ -34,4 +38,11 @@ func cost(x, y []float64, theta0, theta1 float64) float64 {
 	}
 	distance = distance / float64(len(x))
 	return distance
+}
+
+/**
+最佳推测
+*/
+func h(x, theta0, theta1 float64) float64 {
+	return theta0 + theta1*x
 }

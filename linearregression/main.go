@@ -34,7 +34,7 @@ func cost(x, y []float64, theta0, theta1 float64) float64 {
 	var distance float64
 	for k, v := range x {
 		actY := theta0 + theta1*v
-		distance += math.Abs(float64(actY) - float64(y[k]))
+		distance += math.Abs(actY - y[k])
 	}
 	distance = distance / float64(len(x))
 	return distance

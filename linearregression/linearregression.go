@@ -17,8 +17,9 @@ func main() {
 	fmt.Printf("theta1=75, cost=%.2f, theta1=160 , cost= %.2f\n", c1, c2)
 
 	//使用gonum库的方法计算最佳值
+	//theta0, theta1 :=calTheta(x, y, 1500, 0.1)
+	//fmt.Printf("theta_0=%.2f, theta_1=%.2f, cost=%.2f\n", theta0, theta1, cost(x, y, theta0, theta1))
 	theta0, theta1 := stat.LinearRegression(x, y, nil, false)
-	fmt.Printf("theta_0=%.2f, theta_1=%.2f, cost=%.2f\n", theta0, theta1, cost(x, y, theta0, theta1))
 
 	//使用最低消耗的参数来估算价格
 	res := h(3000, theta0, theta1)

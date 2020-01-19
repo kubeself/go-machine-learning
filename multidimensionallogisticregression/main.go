@@ -2,9 +2,14 @@ package main
 
 import (
 	"fmt"
+	"gonum.org/v1/gonum/mat"
 	"math"
 )
 
+//https://github.com/patrikeh/go-deep
+//https://medium.com/@kidtronnix/making-a-neural-network-from-scratch-using-go-2bfd4dafce9c
+//https://medium.com/wireless-registry-engineering/gonum-tutorial-linear-algebra-in-go-21ef136fc2d7
+//https://sausheong.github.io/posts/how-to-build-a-simple-artificial-neural-network-with-go/
 func main() {
 
 	/**
@@ -26,21 +31,20 @@ func main() {
 		{1, 2.5, 6, 0},
 	}
 
-	ds := make([][]float64, len(data))
+	ds := make([]float64, len(data)*(len(data[0])-1))
 	label := make([]float64, len(data))
 	for i := range data {
-		ds[i] = make([]float64, len(data[0])-1)
 		for j, val := range data[i] {
 			if j == 3 {
 				label[i] = val
 			} else {
-				ds[i][j] = data[i][j]
+				ds[i*j] = data[i][j]
 			}
 		}
 		fmt.Println()
 	}
 
-	w := make([]float64, len(ds))
+	w := make([]float64, len(data[0])-1)
 	for i := 0; i < len(data[0])-1; i++ {
 		w[i] = 1
 	}
@@ -49,6 +53,13 @@ func main() {
 	fmt.Println(label)
 	fmt.Println(ds)
 	fmt.Println(w)
+
+	dmat := mat.NewDense(len(data), len(data[0])-1, ds)
+	lmat := mat.NewDense(1, len(data), label).T()
+	//mxn的矩阵的行数和列数
+	m, n := len(data), len(data[0])-1
+	alpha := 0.1
+
 	//https://zhuanlan.zhihu.com/p/27161729
 	//dmat:=mat.NewDense(len(ds),len(ds[0]), ds)
 	//初始化w为【1，1，1】
@@ -74,7 +85,13 @@ func main() {
 	分割线的表达式为：w0+w1x+w2y=0， 代入w后得 3.1-5.5x+1.6y=0, 即y=3.44x-1.9 。 见下图，该直线正确地将图形划分开。
 	*/
 	loops := 200
+	wmat := mat.NewDense(1, len(data[0])-1, w)
 	for i := 0; i < loops; i++ {
+
+		dmat.Product(dmat, wmat)
+		h := sigmoid(mat.Det(dmat))
+		err := h - mat.Det(lmat)
+		w = alpha * mat.Det(dmat.T()) * err
 
 	}
 

@@ -5,6 +5,8 @@ import (
 	"math"
 )
 
+//解决多元概率问题是从一元进行扩展的,每一元与结果直接计算theta0和theta1，最后进行相加除以1就是结果
+//多元 y = theta0 +
 func main() {
 
 	x := [][]float64{
@@ -31,13 +33,33 @@ func main() {
 	//分别计算每一列的最佳theta0 & theta1
 	for i := range bestTheta {
 		bestTheta[i] = make([]float64, 2) // 存储theta0 & theta1
-		theta0, theta1 := calTheta(0.1, 200, dataX[i], y)
+		theta0, theta1 := calTheta(0.1, 1000, dataX[i], y)
 		bestTheta[i][0] = theta0
 		bestTheta[i][1] = theta1
 		//disp([theta_0, theta_1, cost(theta_0, theta_1, x, y)]);
 		fmt.Printf("%.2f,%.2f,%.2f\n", theta0, theta1, cost(theta0, theta1, dataX[i], y))
 	}
-	fmt.Println(bestTheta)
+	//fmt.Println(bestTheta)
+	//得到 y = 0+0*x1+1.91+(-1.15)*x2+(-1.40)+(0.35*x3)
+	//打印每一行的概率
+	//计算后打印 x=1-10的概率值
+	for i := 0; i < len(x); i++ {
+		p := float64(0)
+		for j := 0; j < len(x[i]); j++ {
+			p += h(x[i][j], bestTheta[j][0], bestTheta[j][1])
+		}
+		p /= float64(len(x[i]))
+		fmt.Printf("x=%d, p=%.2f\n", i, p)
+	}
+
+	//测试指定记录的概率： {1, 9, 888}
+	testData := []float64{1, 2.8, 6.1}
+	p := float64(0)
+	for i, v := range testData {
+		p += h(v, bestTheta[i][0], bestTheta[i][1])
+	}
+	p /= float64(len(testData))
+	fmt.Printf("property for %v = %.2f\n", testData, p)
 }
 
 /**

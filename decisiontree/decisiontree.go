@@ -5,37 +5,24 @@ import (
 	"math"
 )
 
+type TreeNode struct {
+	label string
+	no    *TreeNode
+	yes   *TreeNode
+	val   int
+}
+
 /**
   决策树
 */
 func main() {
-
-	dataSet := createDataSet()
-	//dataSet2 := createDataSet2()
-
-	/*
-		res := CalcShannonEnt(dataSet)
-		fmt.Println(res)
-
-
-		res = CalcShannonEnt(dataSet2)
-		fmt.Println(res)
-
-
-		res1:=SplitDataSet(dataSet, 0 , 1)
-		res2 := SplitDataSet(dataSet, 0, 0)
-
-		fmt.Println(res1)
-		fmt.Println(res2)
-
-
-	*/
-	res3 := ChooseBestFeatureToSplit(dataSet)
-	fmt.Println(res3)
-
+	dataSet, labels := createDataSet()
+	tree := CreateTree(dataSet, labels)
+	fmt.Println(tree)
+	tree.Print()
 }
 
-func createDataSet() [][]int {
+func createDataSet() ([][]int, []string) {
 	dataSet := [][]int{
 		{1, 1, 1},
 		{1, 1, 1},
@@ -43,8 +30,12 @@ func createDataSet() [][]int {
 		{0, 1, 0},
 		{0, 1, 0},
 	}
+	labels := []string{
+		"no surfacing",
+		"flippers",
+	}
 
-	return dataSet
+	return dataSet, labels
 }
 
 func createDataSet2() [][]int {
@@ -106,13 +97,15 @@ func SplitDataSet(dataSet [][]int, axis int, value int) [][]int {
 				reduceFeatVec = append(reduceFeatVec, w)
 			}
 			retDataSet = append(retDataSet, reduceFeatVec)
-			fmt.Println("retDataSet:", retDataSet)
+
 		}
 	}
-	fmt.Println("all-retDataSet:", retDataSet)
 	return retDataSet
 }
 
+/**
+  选择最好的特征列
+*/
 func ChooseBestFeatureToSplit(dataSet [][]int) int {
 	// len of feature
 	numFeature := len(dataSet[0]) - 1 // 特点一共有多少列
@@ -134,22 +127,15 @@ func ChooseBestFeatureToSplit(dataSet [][]int) int {
 		//当前列复杂度初始化
 		newEntropy := 0.0
 		//计算当前列   每个值的出现概率 * 具有当前值的行记录(排除当前列的)
-		fmt.Println("dataset?", dataSet)
+
 		for k := range uniMap {
 			subDataSet := SplitDataSet(dataSet, i, k)
 			prob := float64(len(subDataSet)) / float64(len(dataSet))
-			fmt.Println("subDataSet", subDataSet)
-			fmt.Println("dataset??", dataSet)
-			fmt.Println("k, i", k, i)
-			fmt.Println("i= ?, prob * shanno:", i, prob, "*", CalcShannonEnt(subDataSet))
+
 			newEntropy += prob * CalcShannonEnt(subDataSet)
 		}
-		fmt.Println("dataset???", dataSet)
 
 		infoGain := baseEntropy - newEntropy
-		fmt.Println("baseEntropy:", baseEntropy)
-		fmt.Println("NewEntropy:", newEntropy)
-		fmt.Println("infoGain", infoGain)
 		if infoGain > baseInfoGain {
 			baseInfoGain = infoGain
 			bestFeature = i
@@ -157,5 +143,122 @@ func ChooseBestFeatureToSplit(dataSet [][]int) int {
 
 	}
 	return bestFeature
+
+}
+
+/**
+  返回出现 次数最多的分类 . 返回主要决定的特征
+*/
+func majorityCnt(classList []int) int {
+	classCnt := make(map[int]int, 0)
+	for vote := range classList {
+		if _, ok := classCnt[vote]; ok == false {
+			classCnt[vote] = 0
+		}
+		classCnt[vote]++
+	}
+
+	maxIndex := 0
+	maxVal := 0
+
+	for k, v := range classCnt {
+		if v > maxVal {
+			maxIndex = k
+			maxVal = v
+		}
+	}
+	return maxIndex
+}
+
+func CreateTree(dataSet [][]int, labels []string) *TreeNode {
+	fmt.Println("create Tree:", dataSet)
+	//结果分类:
+	featNum := len(dataSet[0]) - 1
+	classList := make([]int, 0)
+	for _, item := range dataSet {
+		classList = append(classList, item[featNum])
+	}
+
+	//分类内所有元素完全相同, 停止分类
+	firstVal := classList[0]
+	allSame := true
+	for _, v := range classList {
+		if v != firstVal {
+			allSame = false
+			break
+		}
+	}
+
+	if allSame == true {
+		fmt.Println("return first Val:", firstVal)
+		return &TreeNode{
+			val: firstVal,
+		}
+	}
+
+	//所有特征都已经遍历完事,返回最主要的决定值
+	if len(dataSet[0]) == 1 {
+		return &TreeNode{
+			val: majorityCnt(classList),
+		}
+	}
+	//开始找最有决定权的列
+	bestFeat := ChooseBestFeatureToSplit(dataSet)
+
+	myTree := TreeNode{
+		label: labels[bestFeat],
+	}
+	//del elem by index
+	labels = append(labels[:bestFeat], labels[bestFeat+1:]...)
+
+	//获取最佳列的值map
+	uniVal := make(map[int]int)
+	for _, v := range dataSet {
+		val := v[bestFeat]
+		if _, ok := uniVal[val]; ok == false {
+			uniVal[val] = 1
+		}
+	}
+
+	/**
+	  遍历最佳列的值列表,
+	*/
+	for v, _ := range uniVal {
+		subLabels := labels[:]
+		if v == 0 {
+			myTree.no = CreateTree(SplitDataSet(dataSet, bestFeat, v), subLabels)
+			fmt.Println("[myTree.child]:", myTree.no)
+		} else if v == 1 {
+			myTree.yes = CreateTree(SplitDataSet(dataSet, bestFeat, v), subLabels)
+			fmt.Println("[myTree.child]:", myTree.yes)
+		}
+
+	}
+
+	return &myTree
+
+}
+
+func (n *TreeNode) Print() {
+	//中, 左, 右
+
+	if n.label != "" {
+		fmt.Println("label=", n.label)
+	}
+	if n.no == nil && n.yes == nil {
+		fmt.Println("val=", n.val)
+	}
+
+	if n.no != nil {
+		fmt.Println("no branch>")
+		n.no.Print()
+	}
+	if n.yes != nil {
+		fmt.Println("yes branch>")
+		n.yes.Print()
+	}
+	if n.no == nil && n.yes == nil {
+		return
+	}
 
 }

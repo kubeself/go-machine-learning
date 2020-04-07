@@ -20,6 +20,16 @@ func main() {
 	tree := CreateTree(dataSet, labels)
 	fmt.Println(tree)
 	tree.Print()
+	//预测结果(0,0)
+	testData := map[string]int{
+		"no surfacing": 1,
+		"flippers":     1,
+	}
+
+	res := tree.GuessResult(testData)
+
+	fmt.Println("guess res=", res)
+
 }
 
 func createDataSet() ([][]int, []string) {
@@ -36,18 +46,6 @@ func createDataSet() ([][]int, []string) {
 	}
 
 	return dataSet, labels
-}
-
-func createDataSet2() [][]int {
-	dataSet := [][]int{
-		{1, 1, 2},
-		{1, 1, 1},
-		{1, 0, 0},
-		{0, 1, 0},
-		{0, 1, 0},
-	}
-
-	return dataSet
 }
 
 /**
@@ -260,5 +258,27 @@ func (n *TreeNode) Print() {
 	if n.no == nil && n.yes == nil {
 		return
 	}
+
+}
+
+func (n *TreeNode) GuessResult(testData map[string]int) int {
+
+	if n.no == nil && n.yes == nil {
+		return n.val
+	}
+
+	//当前的label
+	l := n.label
+	v := testData[l]
+	fmt.Println("label=", l)
+	if v == 1 {
+		fmt.Println("find yes branch")
+		return n.yes.GuessResult(testData)
+	} else if v == 0 {
+		fmt.Println("find no branch")
+		return n.no.GuessResult(testData)
+	}
+
+	return -1
 
 }

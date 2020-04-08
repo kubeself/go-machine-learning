@@ -14,6 +14,7 @@ type TreeNode struct {
 
 /**
   决策树
+  通常输入的数据都是 1,0,1,0 的结构, 最终会有几个确定的分类
 */
 func main() {
 	dataSet, labels := createDataSet()

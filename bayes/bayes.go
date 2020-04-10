@@ -9,8 +9,20 @@ import "fmt"
 func main() {
 	listOPosts, listClasses := LoadDataSet()
 	myVocabList := CreateVocabList(listOPosts)
+
 	fmt.Println(myVocabList)
 	fmt.Println(listClasses)
+	fmt.Println(SetOfWords2Vec(myVocabList, listOPosts[0]))
+	fmt.Println(SetOfWords2Vec(myVocabList, listOPosts[3]))
+
+	//准备矩阵, 包含是否包含在词库的信息, 0=不包含, 1=包含
+	trainMat := make([][]int, 0)
+	for _, doc := range listOPosts {
+		trainMat = append(trainMat, SetOfWords2Vec(myVocabList, doc))
+	}
+
+	//训练数据
+	TrainNBO(trainMat, listClasses)
 
 }
 
@@ -60,4 +72,34 @@ func SetOfWords2Vec(vocabList []string, inputSet []string) []int {
 		}
 	}
 	return resVec
+}
+
+/**
+  训练数据
+*/
+func TrainNBO(trainMatrix [][]int, trainCategory []int) {
+	numTrainDoc := len(trainMatrix) // 行数
+	numWords := len(trainMatrix[0]) // 列数
+	sumTrainCategory := float64(0)
+
+	for _, v := range trainCategory {
+		sumTrainCategory += float64(v)
+	}
+	pAbusive := sumTrainCategory / float64(numTrainDoc) // 总的成功概率
+
+	//初始化概率
+	p0num := make([]int, numWords) // 0 的概率
+	p1num := make([]int, numWords) // 1 的概率
+
+	p0Denom := float64(0) // 0 的分母
+	p1Denom := float64(0) // 1 的分母
+
+	// 遍历每个文档
+	for i := 0; i < numTrainDoc; i++ {
+		if trainCategory[i] == 1 {
+			// 当前行是1
+			p1num
+		}
+	}
+
 }

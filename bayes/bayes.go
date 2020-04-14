@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
 /**
   处理多类别问题
@@ -22,7 +25,16 @@ func main() {
 	}
 
 	//训练数据
-	TrainNBO(trainMat, listClasses)
+	p0Vec, p1Vec, pAbusive := TrainNBO(trainMat, listClasses)
+
+	//需要计算的数据
+	testEntry := []string{"love", "my", "dalmation"}
+	thisDoc := SetOfWords2Vec(myVocabList, testEntry)
+	fmt.Println(ClassifyNB(thisDoc, p0Vec, p1Vec, pAbusive))
+
+	testEntry = []string{"stupid", "garbage"}
+	thisDoc = SetOfWords2Vec(myVocabList, testEntry)
+	fmt.Println(ClassifyNB(thisDoc, p0Vec, p1Vec, pAbusive))
 
 }
 
@@ -77,7 +89,7 @@ func SetOfWords2Vec(vocabList []string, inputSet []string) []int {
 /**
   训练数据
 */
-func TrainNBO(trainMatrix [][]int, trainCategory []int) {
+func TrainNBO(trainMatrix [][]int, trainCategory []int) ([]float64, []float64, float64) {
 	numTrainDoc := len(trainMatrix) // 行数
 	numWords := len(trainMatrix[0]) // 列数
 	sumTrainCategory := float64(0)
@@ -91,15 +103,56 @@ func TrainNBO(trainMatrix [][]int, trainCategory []int) {
 	p0num := make([]int, numWords) // 0 的概率
 	p1num := make([]int, numWords) // 1 的概率
 
-	p0Denom := float64(0) // 0 的分母
-	p1Denom := float64(0) // 1 的分母
+	p0Denom := 0.0 // 0 的分母
+	p1Denom := 0.0 // 1 的分母
 
 	// 遍历每个文档
 	for i := 0; i < numTrainDoc; i++ {
 		if trainCategory[i] == 1 {
-			// 当前行是1
-			p1num
+			// 当前行成功的
+			for j, v := range trainMatrix[i] {
+				p1num[j] += v
+				p1Denom += float64(v)
+			}
+		} else if trainCategory[i] == 0 {
+			// 当前行是失败的
+			for j, v := range trainMatrix[i] {
+				p0num[j] += v
+				p0Denom += float64(v)
+			}
 		}
+	}
+
+	p1Vec := make([]float64, numWords)
+	for i, v := range p1num {
+		p1Vec[i] = float64(v) / p1Denom
+	}
+	p0Vec := make([]float64, numWords)
+	for i, v := range p0num {
+		p0Vec[i] = float64(v) / p0Denom
+	}
+
+	return p0Vec, p1Vec, pAbusive
+
+}
+
+func ClassifyNB(vec2Classify []int, p0Vec []float64, p1Vec []float64, pClass1 float64) int {
+
+	p1 := 0.0
+	p0 := 0.0
+
+	for i, v := range vec2Classify {
+		p1 += float64(v) * p1Vec[i]
+		p0 += float64(v) * p0Vec[i]
+	}
+
+	p1 += math.Log(pClass1)
+	p0 += math.Log(1 - pClass1)
+
+	if p1 > p0 {
+		return 1
+	} else {
+		return 0
 	}
 
 }
